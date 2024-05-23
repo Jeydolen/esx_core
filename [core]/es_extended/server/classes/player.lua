@@ -18,11 +18,12 @@ local _assert = assert
 ---@param inventory table
 ---@param weight number
 ---@param job table
+---@param job2 table
 ---@param loadout table
 ---@param name string
 ---@param coords table | vector4
 ---@param metadata table
-function CreateExtendedPlayer(playerId, identifier, group, accounts, inventory, weight, job, loadout, name, coords, metadata)
+function CreateExtendedPlayer(playerId, identifier, group, accounts, inventory, weight, job, job2, loadout, name, coords, metadata)
     local targetOverrides = Config.PlayerFunctionOverride and Core.PlayerFunctionOverrides[Config.PlayerFunctionOverride] or {}
 
     local self = {}
@@ -33,6 +34,7 @@ function CreateExtendedPlayer(playerId, identifier, group, accounts, inventory, 
     self.identifier = identifier
     self.inventory = inventory
     self.job = job
+    self.job2 = job2
     self.loadout = loadout
     self.name = name
     self.playerId = playerId
@@ -54,6 +56,7 @@ function CreateExtendedPlayer(playerId, identifier, group, accounts, inventory, 
     stateBag:set("identifier", self.identifier, true)
     stateBag:set("license", self.license, true)
     stateBag:set("job", self.job, true)
+    stateBag:set("job2", self.job2, true)
     stateBag:set("group", self.group, true)
     stateBag:set("name", self.name, true)
     stateBag:set("metadata", self.metadata, true)
@@ -200,6 +203,11 @@ function CreateExtendedPlayer(playerId, identifier, group, accounts, inventory, 
     ---@return table
     function self.getJob()
         return self.job
+    end
+
+    ---@return table
+    function self.getJob2()
+        return self.job2
     end
 
     ---@param minimal boolean
@@ -478,6 +486,38 @@ function CreateExtendedPlayer(playerId, identifier, group, accounts, inventory, 
         TriggerEvent("esx:setJob", self.source, self.job, lastJob)
         self.triggerEvent("esx:setJob", self.job, lastJob)
         Player(self.source).state:set("job", self.job, true)
+    end
+
+    ---@param newJob string
+    ---@param grade string
+    ---@return void
+    function self.setJob2(newJob, grade)
+        grade = tostring(grade)
+        local lastJob = self.job2
+
+        if not ESX.DoesJobExist(newJob, grade) then
+            return print(("[es_extended] [^3WARNING^7] Ignoring invalid ^5.setJob2()^7 usage for ID: ^5%s^7, Job2: ^5%s^7"):format(self.source, job2))
+        end
+
+        local jobObject, gradeObject = ESX.Jobs[newJob], ESX.Jobs[newJob].grades[grade]
+
+        self.job2 = {
+            id = jobObject.id,
+            name = jobObject.name,
+            label = jobObject.label,
+
+            grade = tonumber(grade),
+            grade_name = gradeObject.name,
+            grade_label = gradeObject.label,
+            grade_salary = gradeObject.salary,
+
+            skin_male = gradeObject.skin_male and json.decode(gradeObject.skin_male) or {},
+            skin_female = gradeObject.skin_female and json.decode(gradeObject.skin_female) or {},
+        }
+
+        TriggerEvent("esx:setJob2", self.source, self.job, lastJob)
+        self.triggerEvent("esx:setJob2", self.job, lastJob)
+        Player(self.source).state:set("job2", self.job2, true)
     end
 
     ---@param weaponName string

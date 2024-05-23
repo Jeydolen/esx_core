@@ -180,6 +180,8 @@ function Core.SavePlayer(xPlayer, cb)
         json.encode(xPlayer.getAccounts(true)),
         xPlayer.job.name,
         xPlayer.job.grade,
+        xPlayer.job2.name,
+        xPlayer.job2.grade,
         xPlayer.group,
         json.encode(xPlayer.getCoords()),
         json.encode(xPlayer.getInventory(true)),
@@ -189,7 +191,7 @@ function Core.SavePlayer(xPlayer, cb)
     }
 
     MySQL.prepare(
-        "UPDATE `users` SET `accounts` = ?, `job` = ?, `job_grade` = ?, `group` = ?, `position` = ?, `inventory` = ?, `loadout` = ?, `metadata` = ? WHERE `identifier` = ?",
+        "UPDATE `users` SET `accounts` = ?, `job` = ?, `job_grade` = ?, `job2` = ?, `job2_grade` = ?, `group` = ?, `position` = ?, `inventory` = ?, `loadout` = ?, `metadata` = ? WHERE `identifier` = ?",
         parameters,
         function(affectedRows)
             if affectedRows == 1 then
@@ -218,6 +220,8 @@ function Core.SavePlayers(cb)
             json.encode(xPlayer.getAccounts(true)),
             xPlayer.job.name,
             xPlayer.job.grade,
+            xPlayer.job2.name,
+            xPlayer.job2.grade,
             xPlayer.group,
             json.encode(xPlayer.getCoords()),
             json.encode(xPlayer.getInventory(true)),
@@ -228,7 +232,7 @@ function Core.SavePlayers(cb)
     end
 
     MySQL.prepare(
-        "UPDATE `users` SET `accounts` = ?, `job` = ?, `job_grade` = ?, `group` = ?, `position` = ?, `inventory` = ?, `loadout` = ?, `metadata` = ? WHERE `identifier` = ?",
+        "UPDATE `users` SET `accounts` = ?, `job` = ?, `job_grade` = ?, `job2` = ?, `job2_grade` = ?, `group` = ?, `position` = ?, `inventory` = ?, `loadout` = ?, `metadata` = ? WHERE `identifier` = ?",
         parameters,
         function(results)
             if not results then
@@ -253,7 +257,7 @@ local function checkTable(key, val, player, xPlayers)
             xPlayers[value] = {}
         end
 
-        if (key == "job" and player.job.name == value) or player[key] == value then
+        if (key == "job" and player.job.name == value) or (key == "job2" and player.job2.name) or player[key] == value then
             xPlayers[value][#xPlayers[value] + 1] = player
         end
     end
@@ -268,7 +272,7 @@ function ESX.GetExtendedPlayers(key, val)
     else
         for _, v in pairs(ESX.Players) do
             if key then
-                if (key == "job" and v.job.name == val) or v[key] == val then
+                if (key == "job" and v.job.name == val) or (key == "job2" and v.job2.name) or v[key] == val then
                     xPlayers[#xPlayers + 1] = v
                 end
             else
@@ -287,7 +291,7 @@ function ESX.GetNumPlayers(key, val)
 
     if type(val) == "table" then
         local numPlayers = {}
-        if key == "job" then
+        if key == "job" or key == "job2" then
             for _, v in ipairs(val) do
                 numPlayers[v] = (ESX.JobsPlayerCount[v] or 0)
             end
@@ -301,7 +305,7 @@ function ESX.GetNumPlayers(key, val)
         return numPlayers
     end
 
-    if key == "job" then
+    if key == "job" or key == "job2" then
         return (ESX.JobsPlayerCount[val] or 0)
     end
 

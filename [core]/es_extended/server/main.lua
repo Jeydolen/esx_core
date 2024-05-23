@@ -3,7 +3,7 @@ SetGameType("ESX Legacy")
 
 local oneSyncState = GetConvar("onesync", "off")
 local newPlayer = "INSERT INTO `users` SET `accounts` = ?, `identifier` = ?, `group` = ?"
-local loadPlayer = "SELECT `accounts`, `job`, `job_grade`, `group`, `position`, `inventory`, `skin`, `loadout`, `metadata`"
+local loadPlayer = "SELECT `accounts`, `job`, `job_grade`, `job2`, `job2_grade`, `group`, `position`, `inventory`, `skin`, `loadout`, `metadata`"
 
 if Config.Multichar then
     newPlayer = newPlayer .. ", `firstname` = ?, `lastname` = ?, `dateofbirth` = ?, `sex` = ?, `height` = ?"
@@ -54,7 +54,8 @@ function onPlayerJoined(playerId)
         if ESX.GetPlayerFromIdentifier(identifier) then
             DropPlayer(
                 playerId,
-                ("there was an error loading your character!\nError code: identifier-active-ingame\n\nThis error is caused by a player on this server who has the same identifier as you have. Make sure you are not playing on the same Rockstar account.\n\nYour Rockstar identifier: %s"):format(
+                (
+                    "there was an error loading your character!\nError code: identifier-active-ingame\n\nThis error is caused by a player on this server who has the same identifier as you have. Make sure you are not playing on the same Rockstar account.\n\nYour Rockstar identifier: %s"):format(
                     identifier
                 )
             )
@@ -179,6 +180,30 @@ function loadESXPlayer(identifier, playerId, isNew)
         skin_male = gradeObject.skin_male and json.decode(gradeObject.skin_male) or {},
         skin_female = gradeObject.skin_female and json.decode(gradeObject.skin_female) or {},
     }
+  
+    -- Job2
+    local job2, grade2 = result.job2, tostring(result.job2_grade)
+
+    if not ESX.DoesJobExist(job2, grade2) then
+        print(("[^3WARNING^7] Ignoring invalid job for ^5%s^7 [job2: ^5%s^7, grade2: ^5%s^7]"):format(identifier, job2, grade2))
+        job2, grade2 = "unemployed", "0"
+    end
+
+    jobObject2, gradeObject2 = ESX.Jobs[job2], ESX.Jobs[job2].grades[grade2]
+
+    userData.job2 = {
+        id = jobObject2.id,
+        name = jobObject2.name,
+        label = jobObject2.label,
+
+        grade = tonumber(grade2),
+        grade_name = gradeObject2.name,
+        grade_label = gradeObject2.label,
+        grade_salary = gradeObject2.salary,
+
+        skin_male = gradeObject2.skin_male and json.decode(gradeObject2.skin_male) or {},
+        skin_female = gradeObject2.skin_female and json.decode(gradeObject2.skin_female) or {},
+    }
 
     -- Inventory
     if not Config.OxInventory then
@@ -248,7 +273,12 @@ function loadESXPlayer(identifier, playerId, isNew)
     userData.metadata = (result.metadata and result.metadata ~= "") and json.decode(result.metadata) or {}
 
     -- xPlayer Creation
-    local xPlayer = CreateExtendedPlayer(playerId, identifier, userData.group, userData.accounts, userData.inventory, userData.weight, userData.job, userData.loadout, GetPlayerName(playerId), userData.coords, userData.metadata)
+    local xPlayer = CreateExtendedPlayer(
+        playerId, identifier, userData.group,
+        userData.accounts, userData.inventory, userData.weight,
+        userData.job, userData.job2, userData.loadout,
+        GetPlayerName(playerId), userData.coords, userData.metadata
+    )
     ESX.Players[playerId] = xPlayer
     Core.playersByIdentifier[identifier] = xPlayer
 
@@ -319,6 +349,12 @@ AddEventHandler("playerDropped", function(reason)
         local currentJob = ESX.JobsPlayerCount[job]
         ESX.JobsPlayerCount[job] = ((currentJob and currentJob > 0) and currentJob or 1) - 1
         GlobalState[("%s:count"):format(job)] = ESX.JobsPlayerCount[job]
+
+        local job2 = xPlayer.getJob2().name
+        local currentJob2 = ESX.JobsPlayerCount[job2]
+        ESX.JobsPlayerCount[job2] = ((currentJob2 and currentJob2 > 0) and currentJob2 or 1) - 1
+        GlobalState[("%s:count"):format(job2)] = ESX.JobsPlayerCount[job2]
+        
         Core.playersByIdentifier[xPlayer.identifier] = nil
         Core.SavePlayer(xPlayer, function()
             ESX.Players[playerId] = nil
@@ -332,9 +368,15 @@ AddEventHandler("esx:playerLoaded", function(_, xPlayer)
 
     ESX.JobsPlayerCount[job] = (ESX.JobsPlayerCount[job] or 0) + 1
     GlobalState[jobKey] = ESX.JobsPlayerCount[job]
+    
+    local job2 = xPlayer.getJob2().name
+    local job2Key = ("%s:count"):format(job2)
+
+    ESX.JobsPlayerCount[job2] = (ESX.JobsPlayerCount[job2] or 0) + 1
+    GlobalState[job2Key] = ESX.JobsPlayerCount[job2]
 end)
 
-AddEventHandler("esx:setJob", function(_, job, lastJob)
+function setJobHandler(job, lastJob)
     local lastJobKey = ("%s:count"):format(lastJob.name)
     local jobKey = ("%s:count"):format(job.name)
     local currentLastJob = ESX.JobsPlayerCount[lastJob.name]
@@ -344,6 +386,14 @@ AddEventHandler("esx:setJob", function(_, job, lastJob)
 
     GlobalState[lastJobKey] = ESX.JobsPlayerCount[lastJob.name]
     GlobalState[jobKey] = ESX.JobsPlayerCount[job.name]
+end
+
+AddEventHandler("esx:setJob", function(_, job, lastJob)
+    setJobHandler(job, lastJob)
+end)
+
+AddEventHandler("esx:setJob2", function(_, job, lastJob)
+    setJobHandler(job, lastJob)
 end)
 
 AddEventHandler("esx:playerLogout", function(playerId, cb)
@@ -582,21 +632,6 @@ if not Config.OxInventory then
     end)
 end
 
-ESX.RegisterServerCallback("esx:getPlayerData", function(source, cb)
-    local xPlayer = ESX.GetPlayerFromId(source)
-
-    cb({
-        identifier = xPlayer.identifier,
-        accounts = xPlayer.getAccounts(),
-        inventory = xPlayer.getInventory(),
-        job = xPlayer.getJob(),
-        loadout = xPlayer.getLoadout(),
-        money = xPlayer.getMoney(),
-        position = xPlayer.getCoords(true),
-        metadata = xPlayer.getMeta(),
-    })
-end)
-
 ESX.RegisterServerCallback("esx:isUserAdmin", function(source, cb)
     cb(Core.IsPlayerAdmin(source))
 end)
@@ -605,7 +640,7 @@ ESX.RegisterServerCallback("esx:getGameBuild", function(_, cb)
     cb(tonumber(GetConvar("sv_enforceGameBuild", 1604)))
 end)
 
-ESX.RegisterServerCallback("esx:getOtherPlayerData", function(_, cb, target)
+function getxPlayerData(target, cb)
     local xPlayer = ESX.GetPlayerFromId(target)
 
     cb({
@@ -613,11 +648,20 @@ ESX.RegisterServerCallback("esx:getOtherPlayerData", function(_, cb, target)
         accounts = xPlayer.getAccounts(),
         inventory = xPlayer.getInventory(),
         job = xPlayer.getJob(),
+        job2 = xPlayer.getJob2(),
         loadout = xPlayer.getLoadout(),
         money = xPlayer.getMoney(),
         position = xPlayer.getCoords(true),
         metadata = xPlayer.getMeta(),
     })
+end
+
+ESX.RegisterServerCallback("esx:getPlayerData", function(source, cb)
+    getxPlayerData(source, cb)
+end)
+
+ESX.RegisterServerCallback("esx:getOtherPlayerData", function(_, cb, target)
+    getxPlayerData(target, cb)
 end)
 
 ESX.RegisterServerCallback("esx:getPlayerNames", function(source, cb, players)

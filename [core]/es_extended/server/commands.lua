@@ -25,24 +25,56 @@ ESX.RegisterCommand(
     }
 )
 
+function setJobHandler(xPlayer, args, showError, isPrimaryJob) 
+    if not ESX.DoesJobExist(args.job, args.grade) then
+        return showError(TranslateCap("command_setjob_invalid"))
+    end
+
+    if isPrimaryJob then 
+        args.playerId.setJob(args.job, args.grade)
+    else
+        args.playerId.setJob2(args.job, args.grade)
+    end
+
+    if Config.AdminLogging then
+        local msg = "Set Job /setjob Triggered!"
+        if not isPrimaryJob then
+            msg = "Set Job2 /setjob2 Triggered!"
+        end
+
+        ESX.DiscordLogFields("UserActions", msgr, "pink", {
+            { name = "Player", value = xPlayer and xPlayer.name or "Server Console", inline = true },
+            { name = "ID", value = xPlayer and xPlayer.source or "Unknown ID", inline = true },
+            { name = "Target", value = args.playerId.name, inline = true },
+            { name = "Job", value = args.job, inline = true },
+            { name = "Grade", value = args.grade, inline = true },
+        })
+    end
+end
+
 ESX.RegisterCommand(
     "setjob",
     "admin",
     function(xPlayer, args, showError)
-        if not ESX.DoesJobExist(args.job, args.grade) then
-            return showError(TranslateCap("command_setjob_invalid"))
-        end
+        setJobHandler(xPlayer, args, showError, true)
+    end,
+    true,
+    {
+        help = TranslateCap("command_setjob"),
+        validate = true,
+        arguments = {
+            { name = "playerId", help = TranslateCap("commandgeneric_playerid"), type = "player" },
+            { name = "job", help = TranslateCap("command_setjob_job"), type = "string" },
+            { name = "grade", help = TranslateCap("command_setjob_grade"), type = "number" },
+        },
+    }
+)
 
-        args.playerId.setJob(args.job, args.grade)
-        if Config.AdminLogging then
-            ESX.DiscordLogFields("UserActions", "Set Job /setjob Triggered!", "pink", {
-                { name = "Player", value = xPlayer and xPlayer.name or "Server Console", inline = true },
-                { name = "ID", value = xPlayer and xPlayer.source or "Unknown ID", inline = true },
-                { name = "Target", value = args.playerId.name, inline = true },
-                { name = "Job", value = args.job, inline = true },
-                { name = "Grade", value = args.grade, inline = true },
-            })
-        end
+ESX.RegisterCommand(
+    "setjob2",
+    "admin",
+    function(xPlayer, args, showError)
+        setJobHandler(xPlayer, args, showError, false)
     end,
     true,
     {
@@ -541,6 +573,10 @@ end, true)
 
 ESX.RegisterCommand("job", { "user", "admin" }, function(xPlayer, _, _)
     print(("%s, your job is: ^5%s^0 - ^5%s^0"):format(xPlayer.getName(), xPlayer.getJob().name, xPlayer.getJob().grade_label))
+end, false)
+
+ESX.RegisterCommand("job2", { "user", "admin" }, function(xPlayer, _, _)
+    print(("%s, your secondary job is: ^5%s^0 - ^5%s^0"):format(xPlayer.getName(), xPlayer.getJob2().name, xPlayer.getJob2().grade_label))
 end, false)
 
 ESX.RegisterCommand("info", { "user", "admin" }, function(xPlayer)
