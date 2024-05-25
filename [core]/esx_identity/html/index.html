@@ -14,48 +14,44 @@
         <div class="title"><b>IDENTITY</b></div>
         <form id="register" name="register" action="#">
             <label>
-                First Name
-                <input id="firstname" type="text" name="firstname" placeholder="First Name" minlength="3" maxlength="8"
+                <span id="firstname-label">First Name</span>
+                <input id="firstname" type="text" placeholder="First Name" minlength="3" maxlength="8"
                     pattern="[a-zA-Z]*" />
-                <br />
             </label>
 
             <label>
-                Last Name
-                <input id="lastname" type="text" name="lastname" placeholder="Last Name" minlength="3" maxlength="10"
+                <span id="lastname-label">Last Name</span>
+                <input id="lastname" type="text" placeholder="Last Name" minlength="3" maxlength="10"
                     pattern="[a-zA-Z]*" />
-                <br />
             </label>
 
             <label>
-                Date of Birth (MM/DD/YYYY)
-                <input id="dateofbirth" type="date" name="dateofbirth" min="1900-01-01" max="2010-01-01"
-                    onfocus="(this.type='date')" />
-                <br />
+                <span id="dateofbirth-label">Date of Birth (MM/DD/YYYY)</span>
+                <input id="dateofbirth" type="date" min="1900-01-01" max="2010-01-01" onfocus="(this.type='date')" />
             </label>
 
             <label>
-                Height
-                <input id="height" type="number" name="height" min="120" max="220" placeholder="Height (cm)" />
-                <br />
+                <span id="height-label">Height</span>
+                <input id="height" type="number" min="120" max="220" placeholder="Height (cm)" />
             </label>
-            <center>
-                <div class="radio-toolbar">
-                    <input type="radio" id="radiom" name="sex" value="m" checked />
-                    <label for="radiom">Male</label>
 
-                    <input type="radio" id="radiof" name="sex" value="f" />
-                    <label for="radiof">Female</label>
-                </div>
-            </center>
-            <button id="submit" type="submit">
-                <font size="4px">CREATE</font>
-            </button>
+            <div class="radio-toolbar">
+                <input type="radio" id="radiom" name="sex" value="m" checked />
+                <label for="radiom" id="male-label">
+                    Male
+                </label>
+
+                <input type="radio" id="radiof" name="sex" value="f" />
+                <label for="radiof" id="female-label">
+                    Female
+                </label>
+            </div>
+
+            <button id="submit" type="submit"><span id="create-label">Create</span></button>
         </form>
-        <center>
-            <font size="1px" color="green">If the submit button doesn't work, please ensure that you've entered the
-                fields correctly.</font>
-        </center>
+        <div style="font-size:1px; color:green">
+            If the submit button doesn't work, please ensure that you've entered the fields correctly.
+        </div>
     </div>
 
     <script>

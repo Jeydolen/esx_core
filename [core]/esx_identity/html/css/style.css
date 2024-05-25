@@ -153,6 +153,7 @@ h1 {
 }
 
 label {
+    width: 100%;
     color: rgb(46, 187, 205);
     font-size: 12px;
     font-family: 'Gill Sans', sans-serif;

@@ -1,0 +1,9 @@
+{
+    "firstname": "Prénom",
+    "lastname": "Nom",
+    "dateofbirth": "Date de naissance (mm/jj/AAAA)",
+    "height": "Taille (cm)",
+    "male": "Homme",
+    "female": "Femme",
+    "create": "Créer"
+}

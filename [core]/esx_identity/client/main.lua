@@ -41,7 +41,7 @@ if not Config.UseDeferrals then
             ClearTimecycleModifier()
         end
 
-        SendNUIMessage({ type = "enableui", enable = state })
+        SendNUIMessage({ type = "enableui", enable = state, locale = Config.Locale, debug = Config.EnableDebugging })
     end
 
     RegisterNetEvent("esx_identity:showRegisterIdentity", function()

@@ -29,6 +29,7 @@ files {
 	'html/index.html',
 	'html/js/script.js',
 	'html/css/style.css',
+	'html/locales/*.json'
 }
 
 dependency 'es_extended'

@@ -1,6 +1,15 @@
+let debug = false;
 window.addEventListener("message", (event) => {
     if (event.data.type === "enableui") {
         document.body.classList[event.data.enable ? "remove" : "add"]("none");
+    }
+
+    if (event.data.debug !== undefined) {
+        debug = Boolean(event.data.debug);
+    }
+
+    if (event.data.locale) {
+        loadLocale(event.data.locale);
     }
 });
 
@@ -30,6 +39,48 @@ document.querySelector("#register").addEventListener("submit", (event) => {
 
     document.querySelector("#register").reset();
 });
+
+function debugLog(...args) {
+    if (!debug) {
+        return;
+    }
+
+    console.log(...args);
+}
+
+async function loadLocale(locale) {
+    debugLog("loadLocale", locale);
+    // Fetch of locale ressource
+    let translation;
+    try {
+        translation = await fetch(
+            `https://cfx-nui-esx_identity/html/locales/${locale}.json`
+        ).then(res => res.json());
+    } catch {
+        debugLog("Ressource unavailable ! Aborting");
+        return;
+    }
+
+    debugLog("Translation", translation);
+
+    for (const entry of Object.entries(translation)) {
+        const key = entry[0];
+        const value = entry[1];
+
+        const element = document.getElementById(key);
+        const elementLabel = document.getElementById(key + "-label");
+
+        if (element) {
+            element.placeholder = value;
+        }
+
+        if (elementLabel) {
+            elementLabel.innerText = value;
+        }
+    }
+
+    debugLog("Translation loaded with success !");
+}
 
 document.addEventListener("DOMContentLoaded", () => {
     fetch("http://esx_identity/ready", {
