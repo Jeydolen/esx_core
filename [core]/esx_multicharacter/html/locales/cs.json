@@ -1,0 +1,8 @@
+{
+    "name": "Jméno",
+    "dob": "Datum narození",
+    "job": "Práce",
+    "gender": "Pohlaví",
+    "bank": "Banka",
+    "money": "Peníze"
+}

@@ -1,0 +1,8 @@
+{
+    "name": "Name",
+    "job": "Beruf",
+    "bank": "Bankguthaben",
+    "money": "Bargeld",
+    "gender": "Geschlecht",
+    "dob": "Geburtsdatum"
+}

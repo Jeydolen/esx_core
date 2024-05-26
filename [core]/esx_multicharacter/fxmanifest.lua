@@ -16,4 +16,4 @@ client_scripts { 'client/*.lua' }
 
 ui_page { 'html/ui.html' }
 
-files { 'html/ui.html', 'html/css/main.css', 'html/js/app.js', 'html/locales/*.js' }
+files { 'html/ui.html', 'html/css/main.css', 'html/js/app.js', 'html/locales/*.json' }

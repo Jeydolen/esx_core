@@ -1,66 +1,108 @@
-var money = Intl.NumberFormat("en-US", {
+let locale = "en";
+let debug = false;
+const money = Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",
     minimumFractionDigits: 0,
 });
 
-(() => {
-    Kashacter = {};
+// Dictionnary between element id in dom and keys to get in data dictionnary
+// Sent from main.lua
+const idToValues = {
+    "name-value": { type: "text", values: ["firstname", "lastname"], },
+    "job-value": { type: "text", values: ["job"], },
+    "money-value": { type: "money", values: ["money"], },
+    "bank-value": { type: "money", values: ["bank"], },
+    "dob-value": { type: "text", values: ["dateofbirth"], },
+    "gender-value": { type: "text", values: ["sex"] },
+};
 
-    Kashacter.ShowUI = function (data) {
-        $("body").css({ display: "block" });
-        $(".main-container").css({ display: "block" });
-        $("[data-charid=1]")
-            .html(
-                '<div class="character-info"><p class="character-info-name"><h1>' +
-                    `${translate.name} ` +
-                    "</h1><span>" +
-                    data.firstname +
-                    " " +
-                    data.lastname +
-                    '</span></p><p class="character-info-work"><h1>' +
-                    `${translate.job} ` +
-                    "</h1><span>" +
-                    data.job +
-                    " " +
-                    data.job_grade +
-                    '</span></p><p class="character-info-money"><h1>' +
-                    `${translate.money} ` +
-                    "</h1><span> " +
-                    money.format(data.money) +
-                    '</span></p><p class="character-info-bank"><h1>' +
-                    `${translate.bank} ` +
-                    "</h1><span> " +
-                    money.format(data.bank) +
-                    '</span></p> <p class="character-info-dateofbirth"><h1>' +
-                    `${translate.dob} ` +
-                    "</h1><span>" +
-                    data.dateofbirth +
-                    '</span></p> <p class="character-info-gender"><h1>' +
-                    `${translate.gender} ` +
-                    "</h1><span>" +
-                    data.sex +
-                    "</span></p></div>"
-            )
-            .attr("data-ischar", "true");
-    };
+window.addEventListener("message", function (event) {
+    debugLog(event.data)
+    if (event.data.locale) {
+        locale = event.data.locale;
+    }
 
-    Kashacter.CloseUI = function () {
-        $("body").css({ display: "none" });
-        $(".main-container").css({ display: "none" });
-        $("[data-charid=1]").html('<h3 class="character-fullname"></h3><div class="character-info"><p class="character-info-new"></p></div>');
-    };
+    if (event.data.debug) {
+        debug = Boolean(event.data.debug);
+    }
 
-    window.onload = function (e) {
-        window.addEventListener("message", function (event) {
-            switch (event.data.action) {
-                case "openui":
-                    Kashacter.ShowUI(event.data.character);
-                    break;
-                case "closeui":
-                    Kashacter.CloseUI();
-                    break;
+    switch (event.data.action) {
+        case "openui":
+            showUI(event.data.character);
+            break;
+        case "closeui":
+            closeUI();
+            break;
+    }
+});
+
+function debugLog(...args) {
+    if (!debug) {
+        return;
+    }
+
+    console.log(...args);
+}
+
+async function loadLocale(locale) {
+    debugLog("loadLocale", locale);
+    // Fetch of locale ressource
+    let translation;
+    try {
+        translation = await fetch(
+            `https://cfx-nui-esx_multicharacter/html/locales/${locale}.json`
+        ).then(res => res.json());
+    } catch {
+        debugLog("Ressource unavailable ! Aborting");
+        return;
+    }
+
+    debugLog("Translation", translation);
+
+    for (const entry of Object.entries(translation)) {
+        const key = entry[0];
+        const value = entry[1];
+
+        const elementLabel = document.getElementById(key + "-label");
+        if (elementLabel) {
+            elementLabel.innerText = value;
+        }
+    }
+
+    debugLog("Translation loaded with success !");
+}
+
+async function showUI(data) {
+    await loadLocale(locale);
+
+    document.querySelector("body").style.display = "block";
+    document.querySelector(".main-container").style.display = "block";
+
+    for (const entry of Object.entries(idToValues)) {
+        const id = entry[0];
+        const { values, type } = entry[1];
+
+        const element = document.getElementById(id);
+        if (!element) {
+            debugLog("Element id: ", id, "is not a valid element in DOM !");
+            continue;
+        }
+
+        // Element text reset (when switching between characters)
+        element.innerText = "";
+        for (const value of values) {
+            let text = data[value] ?? "";
+            if (type === "money") {
+                text = money.format(text);
             }
-        });
-    };
-})();
+
+            element.innerText += " " + text;
+        }
+    }
+}
+
+function closeUI() {
+    document.querySelector("body").style.display = "none";
+    document.querySelector(".main-container").style.display = "none";
+}

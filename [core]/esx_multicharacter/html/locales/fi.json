@@ -1,0 +1,8 @@
+{
+    "name": "Nimi",
+    "job": "Työ",
+    "bank": "Pankki",
+    "money": "Käteinen",
+    "gender": "Sukupuoli",
+    "dob": "Syntymäaika"
+}

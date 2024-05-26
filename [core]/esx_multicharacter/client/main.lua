@@ -144,6 +144,8 @@ if ESX.GetConfig().Multichar then
         SendNUIMessage({
             action = "openui",
             character = Characters[spawned],
+            locale = Config.Locale,
+            debug = Config.Debug
         })
     end
 

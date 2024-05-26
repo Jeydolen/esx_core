@@ -4,6 +4,9 @@ Config.Locale = GetConvar("esx:locale", "en")
 -- Allows players to delete their characters
 Config.CanDelete = true
 
+-- Used for verbose logging in NUI
+Config.Debug = true
+
 if IsDuplicityVersion() then
     -- This is the default number of slots for EVERY player
     -- If you want to manage extra slots for specific players you can do it by using '/setslots' and '/remslots' commands
